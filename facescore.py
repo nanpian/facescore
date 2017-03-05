@@ -5,10 +5,12 @@ import uuid
 import Image
 import StringIO
 import os
+import commands
+import guess
 
 class PredictHandler(tornado.web.RequestHandler):
      def get(self):
-		self.render("index.html")
+	    self.render("index.html")
 
      def post(self):  
         if self.request.files:  
@@ -16,15 +18,23 @@ class PredictHandler(tornado.web.RequestHandler):
             print 'file_name',file_name
             file_raw = self.request.files["file"][0]["body"]
             usr_home = os.path.expanduser('~')
-            fin = open(usr_home+"/tensorflow/static/tmp/m_%s.png" % file_name,"w")
+            file_name = usr_home+"/tensorflow/static/tmp/m_%s.jpg" % file_name
+            fin = open(file_name,"w")
             print "success to open file"  
             fin.write(file_raw)  
             fin.close()
+            print "use tensorflow"
+            age = guess.guessAge(file_name)
+            print 'guess age is ', age
+            #output age  score and gender
+            #gender = guess.guessGender(image_file)
+
+
 
 application = tornado.web.Application([
     (r"/predict", PredictHandler),
 ])
 
 if __name__ == "__main__":
-    application.listen(8888)
+    application.listen(8882)
     tornado.ioloop.IOLoop.instance().start()

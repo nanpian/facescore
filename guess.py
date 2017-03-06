@@ -18,6 +18,7 @@ GENDER_LIST =['M','F']
 AGE_LIST = ['(0, 2)','(4, 6)','(8, 12)','(15, 20)','(25, 32)','(38, 43)','(48, 53)','(60, 100)']
 AGE_MODEL_PATH = '../22801'
 GENDER_MODEL_PATH = '../22801'
+model_checkpoint_path = ''
 
 tf.app.flags.DEFINE_string('model_dir', '',
                            'Model directory (where training data lives)')
@@ -84,7 +85,7 @@ def classify(sess, label_list, softmax_output, coder, images, image_file):
         second_best = np.argmax(output)
 
         print('Guess @ 2 %s, prob = %.2f' % (label_list[second_best], output[second_best]))
-    return best_choice
+    return label_list[best]
          
 def batchlist(srcfile):
     with open(srcfile, 'r') as csvfile:
@@ -106,6 +107,9 @@ def detectface(filename):
     return image_file
 
 def guessAge(image_file):
+
+    #import!!!Fix the bug http://stackoverflow.com/questions/33765336/remove-nodes-from-graph-or-reset-entire-default-graph
+    tf.reset_default_graph()
     with tf.Session() as sess:
 
         age_label_list = AGE_LIST
@@ -125,7 +129,9 @@ def guessAge(image_file):
         model_checkpoint_path, global_step = get_checkpoint(checkpoint_path, requested_step, FLAGS.checkpoint)
 
         saver = tf.train.Saver()
-        saver.restore(sess, model_checkpoint_path)
+        if not saver.last_checkpoints :
+            saver.restore(sess, model_checkpoint_path)
+
 
         softmax_output = tf.nn.softmax(logits_age)
 
@@ -134,16 +140,15 @@ def guessAge(image_file):
         files = []
 
         # detect age
-        try:
-            best_choice = classify(sess, age_label_list, softmax_output, coder, images, image_file)
-            return best_choice
-        except Exception as e:
-            print(e)
-            print('Failed to run image %s ' % image_file)
+        best_choice = classify(sess, age_label_list, softmax_output, coder, images, image_file)
+
+        sess.close()
+        return best_choice
 
 def guessGender(image_file):
     with tf.Session() as sess:
 
+        sess = tf.Session()
         age_label_list = AGE_LIST
         gender_label_list = GENDER_LIST
         genderlabels = len(gender_label_list)

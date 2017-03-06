@@ -7,6 +7,8 @@ import StringIO
 import os
 import commands
 import guess
+import json
+
 
 class PredictHandler(tornado.web.RequestHandler):
      def get(self):
@@ -26,6 +28,10 @@ class PredictHandler(tornado.web.RequestHandler):
             print "use tensorflow"
             age = guess.guessAge(file_name)
             print 'guess age is ', age
+            feeds_json = json.dumps(age)
+            self.set_header('Content-Type', 'application/json; charset=UTF-8')
+            self.write(feeds_json)
+            self.finish()
             #output age  score and gender
             #gender = guess.guessGender(image_file)
 
